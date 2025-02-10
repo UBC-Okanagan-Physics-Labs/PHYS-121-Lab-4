@@ -461,7 +461,7 @@ def LinearFit(xData, yData, yErrors = [], xlabel = 'x-axis', ylabel = 'y-axis', 
 # - modified 20230221                                                         #
 ############################################################################### 
 # Start the 'PowerLaw' function.
-def PowerLaw(xData, yData, yErrors = [], xlabel = 'x-axis', ylabel = 'y-axis', xUnits = '', yUnits = ''):
+def PowerLaw(xData, yData, yErrors = [], xlabel = 'x-axis', ylabel = 'y-axis', xUnits = '', yUnits = '', start = (1, 2, 0)):
     # Check to see if the elements of dataArray are numpy arrays.  If they are, convert to lists
     Coeff = ''
     Power = ''
@@ -518,10 +518,10 @@ def PowerLaw(xData, yData, yErrors = [], xlabel = 'x-axis', ylabel = 'y-axis', x
         else:
             display(Markdown('$y = A\,(x/1$ ' + xUnits + '$)^N\,+ \,C$'))
         if len(yErrors) == 0: 
-            a_fit, cov = curve_fit(PowerFunc, xData, yData/ymax)
+            a_fit, cov = curve_fit(PowerFunc, xData, yData/ymax, p0 = start)
             display(Markdown('This is an **UNWEIGHTED** fit.'))
         else:
-            a_fit, cov = curve_fit(PowerFunc, xData, yData/ymax, sigma = yErrors/ymax)
+            a_fit, cov = curve_fit(PowerFunc, xData, yData/ymax, sigma = yErrors/ymax, p0 = start)
             display(Markdown('This is a **WEIGHTED** fit.'))
 
         Coeff = a_fit[0]*ymax
@@ -1302,16 +1302,18 @@ def Mapping(x_coord, y_coord, potential, graphNum = 0, vectorField = True, fig_f
         
             # The interpolated data follows a grid and is sorted.  Now do a second interpolation that does include exprapolation.
             # The extrapolation will fill the plot from zero to 25 in the x direction and from zero to 20 in the y direction.
-            xx, yy = np.meshgrid(xi, yi)
-            Z = np.zeros(np.shape(xx))
+            #xx, yy = np.meshgrid(xi, yi)
+            #Z = np.zeros(np.shape(xx))
 
             #f = interpolate.interp2d(xi, yi, zi, kind='cubic') -- interp2d is deprecated
-            f = scipy.interpolate.RectBivariateSpline(xi, yi, zi) # Replaced 20250130
-
+            f = scipy.interpolate.RectBivariateSpline(yi, xi, zi) # Replaced 20250130
+            
             xnew = np.arange(0, 25.025, 0.025)
             ynew = np.arange(0, 20.02, 0.02)
-            znew = f(xnew, ynew)
-
+            
+            Xnew, Ynew = np.meshgrid(xnew, ynew)
+            Znew = f(ynew, xnew)
+            
             if graphNum == 6:
                 btm = -1
             else:
@@ -1320,9 +1322,9 @@ def Mapping(x_coord, y_coord, potential, graphNum = 0, vectorField = True, fig_f
             # Generate the contour plot.
             fig = plt.figure(figsize=(12, 8), dpi=100)
             ax = fig.add_subplot(111)
-            plt.contourf(xnew, ynew, znew, levels = np.arange(btm, 11, 0.1), cmap='RdYlBu_r');
+            plt.contourf(Xnew, Ynew, Znew, levels = np.arange(btm, 11, 0.1), cmap='RdYlBu_r');
             plt.colorbar(ticks = np.linspace(0, 10, 11))
-            CS = plt.contour(xnew, ynew, znew, levels = np.arange(btm, 11, 0.5), colors = 'dimgray', linewidths = 0.5);
+            CS = plt.contour(Xnew, Ynew, Znew, levels = np.arange(btm, 11, 0.5), colors = 'dimgray', linewidths = 0.5);
             # ax.clabel(CS, CS.levels, inline=True, fontsize=10)
             plt.axis((0, 25, 0, 20))
             plt.xlabel('x (cm)')
@@ -1412,8 +1414,8 @@ def Mapping(x_coord, y_coord, potential, graphNum = 0, vectorField = True, fig_f
             if vectorField == True:
                 # Calculate the electric field at all the points in the interpolated/extrapolated potential.
                 xEle, yEle = np.mgrid[0:25.025:0.025, 0:20.02:0.02]
-                zEle = np.transpose(znew)
-                Ex, Ey = np.gradient(zEle, 0.025, 0.025)
+                zEle = np.transpose(Znew)
+                Ex, Ey = np.gradient(zEle, 0.025, 0.02)
                 Ex = -Ex
                 Ey = -Ey
 
