@@ -461,7 +461,7 @@ def LinearFit(xData, yData, yErrors = [], xlabel = 'x-axis', ylabel = 'y-axis', 
 # - modified 20230221                                                         #
 ############################################################################### 
 # Start the 'PowerLaw' function.
-def PowerLaw(xData, yData, yErrors = [], xlabel = 'x-axis', ylabel = 'y-axis', xUnits = '', yUnits = ''):
+def PowerLaw(xData, yData, yErrors = [], xlabel = 'x-axis', ylabel = 'y-axis', xUnits = '', yUnits = '', start = (1, 2, 0)):
     # Check to see if the elements of dataArray are numpy arrays.  If they are, convert to lists
     Coeff = ''
     Power = ''
@@ -518,10 +518,10 @@ def PowerLaw(xData, yData, yErrors = [], xlabel = 'x-axis', ylabel = 'y-axis', x
         else:
             display(Markdown('$y = A\,(x/1$ ' + xUnits + '$)^N\,+ \,C$'))
         if len(yErrors) == 0: 
-            a_fit, cov = curve_fit(PowerFunc, xData, yData/ymax)
+            a_fit, cov = curve_fit(PowerFunc, xData, yData/ymax, p0 = start)
             display(Markdown('This is an **UNWEIGHTED** fit.'))
         else:
-            a_fit, cov = curve_fit(PowerFunc, xData, yData/ymax, sigma = yErrors/ymax)
+            a_fit, cov = curve_fit(PowerFunc, xData, yData/ymax, sigma = yErrors/ymax, p0 = start)
             display(Markdown('This is a **WEIGHTED** fit.'))
 
         Coeff = a_fit[0]*ymax
